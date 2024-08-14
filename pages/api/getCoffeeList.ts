@@ -10,7 +10,22 @@ export default async function handler(
       const client = await clientPromise;
       const db = client.db('coffee');
 
-      const coffeeList = await db.collection('coffee').find().toArray();
+      // 총 debt amount를 계산하고 정렬하는 MongoDB Aggregation Pipeline
+      const coffeeList = await db
+        .collection('coffee')
+        .aggregate([
+          {
+            $addFields: {
+              totalDebt: {
+                $sum: '$debt.amount',
+              },
+            },
+          },
+          {
+            $sort: { totalDebt: -1 }, // -1은 내림차순 정렬
+          },
+        ])
+        .toArray();
 
       res.status(200).json(coffeeList);
     } catch (error) {

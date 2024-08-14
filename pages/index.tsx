@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import localFont from 'next/font/local';
 import clientPromise from '@/lib/mongodb';
@@ -64,6 +64,14 @@ export default function Home({ initialCoffee }: CoffeeProps) {
       console.error('커피 리스트 불러오기 중 오류:', error);
     }
   };
+
+  const sortedCoffeeList = useMemo(() => {
+    return [...coffeeList].sort((a, b) => {
+      const totalA = a.debt.reduce((sum, debt) => sum + debt.amount, 0);
+      const totalB = b.debt.reduce((sum, debt) => sum + debt.amount, 0);
+      return totalB - totalA; // 내림차순 정렬
+    });
+  }, [coffeeList]);
 
   const handleAddUser = async () => {
     if (newUserName.trim() === '') return;
@@ -161,12 +169,12 @@ export default function Home({ initialCoffee }: CoffeeProps) {
   return (
     <>
       <div
-        className={`${pretendard.variable} ${pretendard.className} w-full flex justify-center`}
+        className={`${pretendard.variable} ${pretendard.className} w-full flex flex-col items-center justify-center`}
       >
         {/* 리스트 */}
-        <div className="flex flex-col w-full md:w-2/3 mt-12 h-[calc(100dvh-280px)] md:overflow-y-scroll">
+        <div className="flex flex-col w-full md:w-2/3 mt-12 h-[72dvh] md:h-[calc(100dvh-280px)] md:overflow-y-scroll">
           {/* 리스트 한개 */}
-          {coffeeList.map((obj) => (
+          {sortedCoffeeList.map((obj) => (
             <div
               key={obj._id}
               className="flex flex-col md:flex-start md:flex-row justify-between items-start col:items-center mt-6 px-4 w-full group"
@@ -177,8 +185,11 @@ export default function Home({ initialCoffee }: CoffeeProps) {
                   <AvatarFallback>{obj.name.substring(0, 1)}</AvatarFallback>
                 </Avatar>
                 <div className="font-medium text-lg">{obj.name}</div>
+                <div className="w-[60px] text-sm text-gray-600">
+                  총 {obj.debt.reduce((sum, debt) => sum + debt.amount, 0)}잔
+                </div>
                 {/* 갚을 커피 */}
-                <div className="flex w-screen md:w-auto flex-wrap items-center gap-5 ms-8">
+                <div className="flex md:w-auto flex-wrap items-center gap-5 ms-6">
                   {obj.debt.map((deb, index) => (
                     <Popover key={index}>
                       <PopoverTrigger>
@@ -210,7 +221,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
               {/* 선택, 삭제 */}
               <div className="flex items-center justify-center">
                 <Image
-                  className="flex opacity-0 group-hover:opacity-100 mx-2 cursor-pointer"
+                  className="hidden md:block opacity-0 group-hover:opacity-100 mx-2 cursor-pointer"
                   src="/Close_round.svg"
                   width="20"
                   height="20"
@@ -220,11 +231,11 @@ export default function Home({ initialCoffee }: CoffeeProps) {
                 <Select
                   onValueChange={(value) => handleAddDebt(obj._id, value)}
                 >
-                  <SelectTrigger className="mt-2 ms-[-4px] md:mt-0 md:ms-0 w-[156px]">
+                  <SelectTrigger className="mt-2 ms-6 md:mt-0 md:ms-0 w-[156px]">
                     <SelectValue placeholder="추가할 사람 선택"></SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {coffeeList
+                    {sortedCoffeeList
                       .filter(
                         (person) =>
                           person.name !== obj.name &&
@@ -248,7 +259,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
           ))}
         </div>
         {/* 이름 추가 */}
-        <div className="w-full px-10 md:p-0 md:w-1/4 gap-4 flex justify-center items-center fixed bottom-40">
+        <div className="w-full mt-5 px-10 md:p-0 md:w-1/4 gap-4 flex justify-center items-center">
           <Input
             type="text"
             placeholder="이름"
