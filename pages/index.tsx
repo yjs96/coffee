@@ -164,7 +164,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
         className={`${pretendard.variable} ${pretendard.className} w-full flex justify-center`}
       >
         {/* 리스트 */}
-        <div className="flex flex-col w-full md:w-2/3 mt-12 h-[calc(100dvh-280px)] overflow-y-scroll">
+        <div className="flex flex-col w-full md:w-2/3 mt-12 h-[calc(100dvh-280px)] md:overflow-y-scroll">
           {/* 리스트 한개 */}
           {coffeeList.map((obj) => (
             <div
