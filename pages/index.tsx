@@ -76,6 +76,11 @@ export default function Home({ initialCoffee }: CoffeeProps) {
   const handleAddUser = async () => {
     if (newUserName.trim() === '') return;
 
+    if (coffeeList.some((user) => user.name === newUserName.trim())) {
+      alert('이미 등록되어있습니다!');
+      return;
+    }
+
     try {
       const response = await fetch('/api/addUser', {
         method: 'POST',
