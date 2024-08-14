@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="ko">
       <Head />
       <body>
         <Main />

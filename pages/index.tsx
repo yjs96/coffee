@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import localFont from 'next/font/local';
 import clientPromise from '@/lib/mongodb';
+import type { Metadata } from 'next';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+
+export const metadata: Metadata = {
+  title: '커피 내기',
+};
 
 const pretendard = localFont({
   src: '../static/PretendardVariable.woff2',
@@ -34,129 +44,222 @@ interface Coffee {
 }
 
 interface CoffeeProps {
-  coffee: Coffee[];
+  initialCoffee: Coffee[];
 }
 
-export default function Home({ coffee: initialCoffee }: CoffeeProps) {
-  const [coffee, setCoffee] = useState<Coffee[]>(initialCoffee);
-  const [newName, setNewName] = useState<string>('');
+export default function Home({ initialCoffee }: CoffeeProps) {
+  const [newUserName, setNewUserName] = useState('');
+  const [coffeeList, setCoffeeList] = useState(initialCoffee);
 
-  const handleAddPerson = () => {
-    if (newName.trim()) {
-      const newPerson: Coffee = {
-        _id: Date.now().toString(),
-        name: newName.trim(),
-        debt: []
-      };
-      setCoffee([...coffee, newPerson]);
-      setNewName('');
+  const fetchCoffeeList = async () => {
+    try {
+      const response = await fetch('/api/getCoffeeList');
+      if (response.ok) {
+        const data = await response.json();
+        setCoffeeList(data);
+      } else {
+        console.error('커피 리스트 불러오기 실패');
+      }
+    } catch (error) {
+      console.error('커피 리스트 불러오기 중 오류:', error);
     }
   };
 
-  const handleAddDebt = (personId: string, debtorName: string) => {
-    setCoffee(prevCoffee => 
-      prevCoffee.map(person => 
-        person._id === personId
-          ? {
-              ...person,
-              debt: [...person.debt, { name: debtorName, amount: 1 }]
-            }
-          : person
-      )
-    );
+  const handleAddUser = async () => {
+    if (newUserName.trim() === '') return;
+
+    try {
+      const response = await fetch('/api/addUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newUserName }),
+      });
+
+      if (response.ok) {
+        setNewUserName('');
+        await fetchCoffeeList(); // 새 사용자 추가 후 데이터 리로드
+      } else {
+        console.error('사용자 추가 실패');
+      }
+    } catch (error) {
+      console.error('사용자 추가 중 오류:', error);
+    }
   };
 
-  const handleRemoveDebt = (personId: string, debtorName: string) => {
-    setCoffee(prevCoffee => 
-      prevCoffee.map(person => 
-        person._id === personId
-          ? {
-              ...person,
-              debt: person.debt.filter(debt => debt.name !== debtorName)
-            }
-          : person
-      )
-    );
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleAddUser();
+    }
   };
 
-  const handleIncreaseDebt = (personId: string, debtorName: string) => {
-    setCoffee(prevCoffee => 
-      prevCoffee.map(person => 
-        person._id === personId
-          ? {
-              ...person,
-              debt: person.debt.map(debt => 
-                debt.name === debtorName
-                  ? { ...debt, amount: debt.amount + 1 }
-                  : debt
-              )
-            }
-          : person
-      )
-    );
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch('/api/deleteUser', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (response.ok) {
+        await fetchCoffeeList(); // 사용자 삭제 후 데이터 리로드
+      } else {
+        console.error('사용자 삭제 실패');
+      }
+    } catch (error) {
+      console.error('사용자 삭제 중 오류:', error);
+    }
+  };
+
+  const handleAddDebt = async (userId: string, debtorName: string) => {
+    try {
+      const response = await fetch('/api/addDebt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, debtorName, amount: 1 }),
+      });
+
+      if (response.ok) {
+        await fetchCoffeeList(); // 데이터 리로드
+      } else {
+        console.error('debt 추가 실패');
+      }
+    } catch (error) {
+      console.error('debt 추가 중 오류:', error);
+    }
+  };
+
+  const handleAdjustDebt = async (
+    userId: string,
+    debtorName: string,
+    adjustment: number
+  ) => {
+    try {
+      const response = await fetch('/api/adjustDebt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, debtorName, adjustment }),
+      });
+
+      if (response.ok) {
+        await fetchCoffeeList(); // 데이터 리로드
+      } else {
+        console.error('debt 조정 실패');
+      }
+    } catch (error) {
+      console.error('debt 조정 중 오류:', error);
+    }
   };
 
   return (
-    <div className={`${pretendard.variable} w-full h-full p-12 transition-all duration-200`}>
-      <div className={pretendard.className}>
-        <div className="flex justify-center">
-          <div className="w-full flex-col flex h-[calc(100vh-280px)] overflow-y-scroll">
-            {coffee.map((obj) => (
-              <div key={obj._id} className="w-full h-16 my-1 px-4 py-1 flex justify-between items-center">
-                <div className="flex justify-between items-center gap-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <Avatar>
-                      <AvatarFallback>{obj.name.substring(0, 1)}</AvatarFallback>
-                    </Avatar>
-                    <div className="font-medium text-lg">{obj.name}</div>
-                    <div className="flex justify-center items-center gap-5 ms-6">
-                      <div className="flex items-center gap-4">
-                        {obj.debt.map((debt, index) => (
-                          <Popover key={index}>
-                            <PopoverTrigger>
-                              <div className="border flex gap-2 justify-center items-center px-4 py-2 rounded-lg hover:bg-slate-100">
-                                <span>{debt.name}</span>
-                                <span>{debt.amount}잔</span>
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent className="mt-2 w-[200px] flex justify-between">
-                              <Button variant="destructive" onClick={() => handleRemoveDebt(obj._id, debt.name)}>빼기</Button>
-                              <Button variant="outline" onClick={() => handleIncreaseDebt(obj._id, debt.name)}>추가하기</Button>
-                            </PopoverContent>
-                          </Popover>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+    <>
+      <div
+        className={`${pretendard.variable} ${pretendard.className} w-full flex justify-center`}
+      >
+        {/* 리스트 */}
+        <div className="flex flex-col w-full md:w-2/3 mt-12 h-[calc(100dvh-280px)] overflow-y-scroll">
+          {/* 리스트 한개 */}
+          {coffeeList.map((obj) => (
+            <div
+              key={obj._id}
+              className="flex flex-col md:flex-start md:flex-row justify-between items-start col:items-center mt-6 px-4 w-full group"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                {/* 프사 */}
+                <Avatar>
+                  <AvatarFallback>{obj.name.substring(0, 1)}</AvatarFallback>
+                </Avatar>
+                <div className="font-medium text-lg">{obj.name}</div>
+                {/* 갚을 커피 */}
+                <div className="flex w-screen md:w-auto flex-wrap items-center gap-5 ms-8">
+                  {obj.debt.map((deb, index) => (
+                    <Popover key={index}>
+                      <PopoverTrigger>
+                        <div className="border flex gap-1.5 justify-center items-center px-4 py-2 rounded-lg hover:bg-slate-100">
+                          <span>{deb.name}</span>
+                          <span>{deb.amount}잔</span>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="mt-2 w-[200px] flex justify-between">
+                        <Button
+                          variant="destructive"
+                          onClick={() =>
+                            handleAdjustDebt(obj._id, deb.name, -1)
+                          }
+                        >
+                          빼기
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleAdjustDebt(obj._id, deb.name, 1)}
+                        >
+                          추가하기
+                        </Button>
+                      </PopoverContent>
+                    </Popover>
+                  ))}
                 </div>
-                <Select onValueChange={(value) => handleAddDebt(obj._id, value)}>
-                  <SelectTrigger className="w-[150px]">
+              </div>
+              {/* 선택, 삭제 */}
+              <div className="flex items-center justify-center">
+                <Image
+                  className="flex opacity-0 group-hover:opacity-100 mx-2 cursor-pointer"
+                  src="/Close_round.svg"
+                  width="20"
+                  height="20"
+                  alt="delete"
+                  onClick={() => handleDeleteUser(obj._id)}
+                />
+                <Select
+                  onValueChange={(value) => handleAddDebt(obj._id, value)}
+                >
+                  <SelectTrigger className="mt-2 ms-[-4px] md:mt-0 md:ms-0 w-[156px]">
                     <SelectValue placeholder="추가할 사람 선택"></SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {coffee
-                      .filter(person => person.name !== obj.name)
-                      .map(person => (
-                        <SelectItem key={person._id} value={person.name}>{person.name}</SelectItem>
-                      ))
-                    }
+                    {coffeeList
+                      .filter(
+                        (person) =>
+                          person.name !== obj.name &&
+                          !obj.debt.some((debt) => debt.name === person.name)
+                      )
+                      .map((person) => (
+                        <SelectItem key={person._id} value={person.name}>
+                          {person.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
+                <Button
+                  className="md:hidden block mt-2 ms-3"
+                  onClick={() => handleDeleteUser(obj._id)}
+                >
+                  삭제
+                </Button>
               </div>
-            ))}
-          </div>
-          <div className="w-1/3 gap-4 flex justify-center items-center fixed bottom-40">
-            <Input 
-              type="text" 
-              placeholder="이름" 
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <Button onClick={handleAddPerson}>추가</Button>
-          </div>
+            </div>
+          ))}
+        </div>
+        {/* 이름 추가 */}
+        <div className="w-full px-10 md:p-0 md:w-1/4 gap-4 flex justify-center items-center fixed bottom-40">
+          <Input
+            type="text"
+            placeholder="이름"
+            value={newUserName}
+            onChange={(e) => setNewUserName(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <Button onClick={handleAddUser}>추가</Button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -166,10 +269,10 @@ export const getServerSideProps: GetServerSideProps = async () => {
     const db = client.db('coffee');
     const coffee = await db.collection('coffee').find().toArray();
     return {
-      props: { coffee: JSON.parse(JSON.stringify(coffee)) },
+      props: { initialCoffee: JSON.parse(JSON.stringify(coffee)) },
     };
   } catch (e) {
     console.error(e);
-    return { props: { coffee: [] } };
+    return { props: { initialCoffee: [] } };
   }
 };
