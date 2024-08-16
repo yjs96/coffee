@@ -165,18 +165,22 @@ export default function Home({ initialCoffee }: CoffeeProps) {
   };
 
   const generateCopyText = () => {
-    const usersWithDebt = coffeeList.filter(user => user.debt.length > 0);
-    
+    const usersWithDebt = coffeeList.filter((user) => user.debt.length > 0);
+
     const sortedUsers = usersWithDebt.sort((a, b) => {
       const totalDebtA = a.debt.reduce((sum, debt) => sum + debt.amount, 0);
       const totalDebtB = b.debt.reduce((sum, debt) => sum + debt.amount, 0);
       return totalDebtB - totalDebtA;
     });
-    
-    const text = sortedUsers.map(user => {
-      const debtText = user.debt.map(debt => `${debt.name} ${debt.amount}`).join(' ');
-      return `${user.name} - ${debtText}`;
-    }).join('\n');
+
+    const text = sortedUsers
+      .map((user) => {
+        const debtText = user.debt
+          .map((debt) => `${debt.name.substring(1, 3)} ${debt.amount}`)
+          .join(' ');
+        return `${user.name.substring(1, 3)} - ${debtText}`;
+      })
+      .join('\n');
 
     return text;
   };
@@ -186,7 +190,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
     navigator.clipboard
       .writeText(textToCopy)
       .then(() => {
-        toast.success("복사되었습니다");
+        toast.success('복사되었습니다');
       })
       .catch((err) => {
         console.error('클립보드 복사 중 오류 발생:', err);
