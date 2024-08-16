@@ -262,7 +262,6 @@ export default function Home({ initialCoffee }: CoffeeProps) {
           />
           <Button onClick={handleAddUser}>추가</Button>
         </div>
-        <div>프사 추가 예정</div>
       </div>
     </>
   );
