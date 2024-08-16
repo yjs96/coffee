@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { toast, Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: '커피 내기',
@@ -163,8 +164,35 @@ export default function Home({ initialCoffee }: CoffeeProps) {
     }
   };
 
+  const generateCopyText = () => {
+    const usersWithDebt = coffeeList.filter((user) => user.debt.length > 0);
+
+    const text = usersWithDebt
+      .map((user) => {
+        const debtText = user.debt.map((debt) => `${debt.name} ${debt.amount}`).join(' ');
+        return `${user.name} - ${debtText}`;
+      })
+      .join('\n');
+
+    return text;
+  };
+
+  const handleCopyDebt = () => {
+    const textToCopy = generateCopyText();
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        toast.success("복사되었습니다");
+      })
+      .catch((err) => {
+        console.error('클립보드 복사 중 오류 발생:', err);
+        alert('debt 정보 복사에 실패했습니다.');
+      });
+  };
+
   return (
     <>
+      <Toaster />
       <div
         className={`${pretendard.variable} ${pretendard.className} w-full flex flex-col items-center justify-center`}
       >
@@ -252,7 +280,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
           ))}
         </div>
         {/* 이름 추가 */}
-        <div className="w-full mt-5 px-10 md:p-0 md:w-1/4 gap-4 flex justify-center items-center">
+        <div className="w-full mt-5 mb-1 px-10 md:p-0 md:w-1/4 gap-4 flex justify-center items-center">
           <Input
             type="text"
             placeholder="이름"
@@ -261,7 +289,9 @@ export default function Home({ initialCoffee }: CoffeeProps) {
             onKeyDown={handleKeyDown}
           />
           <Button onClick={handleAddUser}>추가</Button>
+          <Button onClick={handleCopyDebt}>복사하기</Button>
         </div>
+        <div>복사하기 기능 추가!</div>
       </div>
     </>
   );
