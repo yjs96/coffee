@@ -15,11 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export const metadata: Metadata = {
   title: '커피 내기',
@@ -147,11 +143,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
     }
   };
 
-  const handleAdjustDebt = async (
-    userId: string,
-    debtorName: string,
-    adjustment: number
-  ) => {
+  const handleAdjustDebt = async (userId: string, debtorName: string, adjustment: number) => {
     try {
       const response = await fetch('/api/adjustDebt', {
         method: 'POST',
@@ -177,12 +169,12 @@ export default function Home({ initialCoffee }: CoffeeProps) {
         className={`${pretendard.variable} ${pretendard.className} w-full flex flex-col items-center justify-center`}
       >
         {/* 리스트 */}
-        <div className="flex flex-col w-full md:w-2/3 mt-4 md:mt-12 h-[84dvh] md:h-[calc(100dvh-280px)] overflow-y-scroll">
+        <div className="flex flex-col w-full md:w-2/3 md:mt-12 h-[84dvh] md:h-[calc(100dvh-280px)] overflow-y-scroll">
           {/* 리스트 한개 */}
           {sortedCoffeeList.map((obj) => (
             <div
               key={obj._id}
-              className="flex flex-col md:flex-start md:flex-row justify-between items-start col:items-center mt-6 px-4 w-full group"
+              className="flex flex-col md:flex-start md:flex-row justify-between items-start col:items-center pt-4 md:pt-0 mb-12 md:mb-6 px-4 w-full group"
             >
               <div className="flex flex-wrap items-center gap-2">
                 {/* 프사 */}
@@ -206,9 +198,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
                       <PopoverContent className="mt-2 w-[200px] flex justify-between">
                         <Button
                           variant="destructive"
-                          onClick={() =>
-                            handleAdjustDebt(obj._id, deb.name, -1)
-                          }
+                          onClick={() => handleAdjustDebt(obj._id, deb.name, -1)}
                         >
                           빼기
                         </Button>
@@ -233,9 +223,7 @@ export default function Home({ initialCoffee }: CoffeeProps) {
                   alt="delete"
                   onClick={() => handleDeleteUser(obj._id)}
                 />
-                <Select
-                  onValueChange={(value) => handleAddDebt(obj._id, value)}
-                >
+                <Select onValueChange={(value) => handleAddDebt(obj._id, value)}>
                   <SelectTrigger className="mt-2 ms-6 md:mt-0 md:ms-0 w-[156px]">
                     <SelectValue placeholder="추가할 사람 선택"></SelectValue>
                   </SelectTrigger>
