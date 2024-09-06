@@ -176,9 +176,9 @@ export default function Home({ initialCoffee }: CoffeeProps) {
     const text = sortedUsers
       .map((user) => {
         const debtText = user.debt
-          .map((debt) => `${debt.name.substring(1, 3)} ${debt.amount}`)
+          .map((debt) => `${debt.name} ${debt.amount}`)
           .join(' ');
-        return `${user.name.substring(1, 3)} - ${debtText}`;
+        return `${user.name} - ${debtText}`;
       })
       .join('\n');
 
